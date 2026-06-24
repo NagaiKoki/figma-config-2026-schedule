@@ -30,7 +30,7 @@
     --card:#ffffff; --line:#dfe2e8; --grid:#e9ebef;
     --main:#6d28d9; --mezzanine:#d63b46; --level2:#0f8a6b;
     --maker:#d9730d; --community:#c026a6; --labs:#2563eb; --venue:#6b7280;
-    --u:16px; --timew:54px; --maxw:1320px;
+    --u:23px; --timew:54px; --maxw:1320px;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--paper);color:var(--ink);
@@ -106,20 +106,20 @@
     color:#f59e0b;pointer-events:none;text-shadow:0 0 2px rgba(255,255,255,.95)}
   .ev.key .going-mark{color:#fbbf24;text-shadow:none;font-size:13px;top:6px;right:10px}
   .ev.going{box-shadow:inset 0 0 0 1.5px #f59e0b}
-  .ev .etime{font-family:"Space Mono",monospace;font-size:9.5px;font-weight:700;
-    letter-spacing:.02em;color:var(--ink);line-height:1.15;
+  .ev .etime{font-family:"Space Mono",monospace;font-size:11px;font-weight:700;
+    letter-spacing:.02em;color:var(--ink);line-height:1.2;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .ev .eorg{font-family:"Space Mono",monospace;font-size:9.5px;font-weight:700;
-    letter-spacing:.02em;color:var(--c);text-transform:uppercase;line-height:1.15;
+  .ev .eorg{font-family:"Space Mono",monospace;font-size:11px;font-weight:700;
+    letter-spacing:.02em;color:var(--c);text-transform:uppercase;line-height:1.2;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .ev h3{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;
-    font-size:12px;line-height:1.13;letter-spacing:-.005em;margin:0;
+    font-size:14px;line-height:1.15;letter-spacing:-.005em;margin:0;
     display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 
   .ev.key{background:var(--main);border:none;color:#fff;padding:9px 13px;justify-content:center}
-  .ev.key .etime{color:rgba(255,255,255,.9);font-size:11px}
+  .ev.key .etime{color:rgba(255,255,255,.9);font-size:12.5px}
   .ev.key .eorg{color:rgba(255,255,255,.82)}
-  .ev.key h3{font-size:17px;-webkit-line-clamp:2}
+  .ev.key h3{font-size:19px;-webkit-line-clamp:2}
   .ev.venue{background:#eef0f2;border-left-color:var(--venue)}
   .ev.venue.key{background:#5b6470}
 
@@ -186,11 +186,11 @@
   .btn:hover{background:var(--main)}
 
   @media (max-width:600px){
-    :root{--timew:40px;--u:17px}
+    :root{--timew:40px;--u:24px}
     .ev{padding:4px 5px;border-left-width:3px}
-    .ev h3{font-size:10.5px;-webkit-line-clamp:2}
-    .ev .etime,.ev .eorg{font-size:8.5px}
-    .ev.key h3{font-size:14px}
+    .ev h3{font-size:12px;-webkit-line-clamp:2}
+    .ev .etime,.ev .eorg{font-size:10px}
+    .ev.key h3{font-size:16px}
     .tt-h{font-size:8.5px;padding:7px 1px}
     .tt-h .bar{width:16px}
     .sheet h2{font-size:21px}
