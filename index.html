@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Config 2026 — Agenda Timetable</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#15171c; --ink-soft:#5a5f6b; --paper:#f4f5f7;
+    --card:#ffffff; --line:#dfe2e8; --grid:#e9ebef;
+    --main:#6d28d9; --mezzanine:#d63b46; --level2:#0f8a6b;
+    --maker:#d9730d; --community:#c026a6; --labs:#2563eb; --venue:#6b7280;
+    --u:16px; --timew:54px; --maxw:1320px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:"Inter",system-ui,sans-serif;line-height:1.45;padding-bottom:40px}
+
+  .masthead{max-width:var(--maxw);margin:0 auto;padding:48px 20px 18px}
+  .masthead-top{display:flex;justify-content:space-between;align-items:center;gap:14px;margin:0 0 12px}
+  .lang-toggle{font-family:"Space Mono",monospace;font-size:11.5px;font-weight:700;
+    letter-spacing:.12em;text-transform:uppercase;background:var(--card);
+    border:1px solid var(--line);border-radius:999px;padding:6px 13px;cursor:pointer;
+    color:var(--ink);display:inline-flex;align-items:center;gap:8px;flex:none}
+  .lang-toggle:hover{border-color:var(--ink)}
+  .lang-toggle .opt{opacity:.38}
+  .lang-toggle .opt.on{opacity:1;color:var(--main)}
+  .lang-toggle .sep{opacity:.4}
+  .eyebrow{font-family:"Space Mono",monospace;font-size:12px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--main);margin:0}
+  .masthead h1{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;
+    font-size:clamp(34px,7vw,72px);line-height:.96;letter-spacing:-.02em;margin:0 0 14px}
+  .masthead h1 em{font-style:normal;color:var(--main)}
+  .sub{font-size:15px;color:var(--ink-soft);max-width:62ch;margin:0}
+  .sub b{color:var(--ink);font-weight:600}
+
+  .legend{max-width:var(--maxw);margin:18px auto 0;padding:0 20px;
+    display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  .legend .hint{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink-soft);margin-right:2px}
+  .chip{appearance:none;border:1px solid var(--line);background:var(--card);color:var(--ink);
+    font-family:"Inter",sans-serif;font-size:12.5px;font-weight:600;padding:5px 11px 5px 9px;
+    border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+  .chip .dot{width:9px;height:9px;border-radius:50%;background:var(--c);flex:none}
+  .chip[aria-pressed="false"]{opacity:.32;text-decoration:line-through}
+  .chip:hover{border-color:var(--ink)}
+
+  .day{max-width:var(--maxw);margin:0 auto;padding:0 20px}
+  .day-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;
+    margin:42px 0 12px;padding-bottom:11px;border-bottom:2px solid var(--ink)}
+  .day-date{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;
+    font-size:30px;letter-spacing:-.015em}
+  .day-dow{font-family:"Space Mono",monospace;font-size:12px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--main);align-self:center}
+  .day-meta{margin-left:auto;font-size:12px;color:var(--ink-soft);
+    font-family:"Space Mono",monospace}
+
+  .preshow{display:flex;flex-wrap:wrap;gap:10px}
+  .pre-card{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--venue);
+    border-radius:12px;padding:13px 15px;flex:1 1 230px;min-width:200px;cursor:pointer}
+  .pre-card .pt{font-family:"Space Mono",monospace;font-size:11px;color:var(--ink-soft)}
+  .pre-card h3{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:16px;margin:4px 0 2px}
+  .pre-card p{margin:0;font-size:12.5px;color:var(--ink-soft)}
+
+  .tt-wrap{border:1px solid var(--line);border-radius:14px;background:var(--card);overflow:hidden}
+  .tt{display:grid;position:relative}
+  .tt-h{position:sticky;top:0;z-index:6;background:var(--card);
+    font-family:"Space Mono",monospace;font-size:10px;font-weight:700;letter-spacing:.04em;
+    text-transform:uppercase;text-align:center;padding:9px 3px;border-bottom:1px solid var(--line)}
+  .tt-h .bar{display:block;height:3px;border-radius:2px;background:var(--c);margin:0 auto 5px;width:24px}
+  .tt-h.time-h{z-index:7;color:var(--ink-soft);text-align:left;padding-left:8px}
+
+  .hourline{grid-column:1 / -1;border-top:1px solid var(--grid);z-index:0;pointer-events:none}
+  .hourlabel{grid-column:1;z-index:3;background:var(--card);
+    font-family:"Space Mono",monospace;font-size:11px;font-weight:700;color:var(--ink-soft);
+    padding:2px 6px 0 8px;border-right:1px solid var(--line)}
+  .timefill{grid-column:1;z-index:2;background:var(--card);border-right:1px solid var(--line)}
+
+  .ev{z-index:1;margin:2px;border-radius:8px;background:var(--card);
+    border:1px solid var(--line);border-left:3px solid var(--c);
+    padding:5px 7px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;gap:1px;
+    transition:transform .08s,box-shadow .12s}
+  .ev:hover{box-shadow:0 3px 12px rgba(0,0,0,.13);transform:translateY(-1px);z-index:4}
+  .ev .etime{font-family:"Space Mono",monospace;font-size:9.5px;font-weight:700;
+    letter-spacing:.02em;color:var(--ink);line-height:1.15;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ev .eorg{font-family:"Space Mono",monospace;font-size:9.5px;font-weight:700;
+    letter-spacing:.02em;color:var(--c);text-transform:uppercase;line-height:1.15;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ev h3{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;
+    font-size:12px;line-height:1.13;letter-spacing:-.005em;margin:0;
+    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+
+  .ev.key{background:var(--main);border:none;color:#fff;padding:9px 13px;justify-content:center}
+  .ev.key .etime{color:rgba(255,255,255,.9);font-size:11px}
+  .ev.key .eorg{color:rgba(255,255,255,.82)}
+  .ev.key h3{font-size:17px;-webkit-line-clamp:2}
+  .ev.venue{background:#eef0f2;border-left-color:var(--venue)}
+  .ev.venue.key{background:#5b6470}
+
+  /* ---------- Bottom sheet ---------- */
+  .scrim{position:fixed;inset:0;background:rgba(15,17,23,.46);opacity:0;visibility:hidden;
+    transition:opacity .2s,visibility .2s;z-index:90}
+  .scrim.open{opacity:1;visibility:visible}
+  .sheet{position:fixed;left:0;right:0;bottom:0;z-index:100;background:var(--card);
+    border-radius:22px 22px 0 0;box-shadow:0 -10px 40px rgba(0,0,0,.25);
+    max-height:80vh;overflow-y:auto;transform:translateY(101%);
+    transition:transform .26s cubic-bezier(.32,.72,0,1);padding:0 22px 30px}
+  .sheet.open{transform:translateY(0)}
+  .sheet-grip{position:sticky;top:0;background:var(--card);padding:11px 0 4px;display:flex;justify-content:center}
+  .sheet-grip::before{content:"";width:38px;height:4px;border-radius:3px;background:var(--line)}
+  .sheet-close{position:absolute;top:12px;right:16px;border:none;background:#eef0f2;color:var(--ink);
+    width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer;line-height:1}
+  .sheet .s-stage{display:inline-flex;align-items:center;gap:7px;font-family:"Space Mono",monospace;
+    font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--c);margin:4px 0 2px}
+  .sheet .s-stage .dot{width:9px;height:9px;border-radius:50%;background:var(--c)}
+  .sheet .s-time{font-family:"Space Mono",monospace;font-size:13px;color:var(--ink-soft);margin:0 0 10px}
+  .sheet h2{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:25px;
+    line-height:1.1;letter-spacing:-.015em;margin:0 0 14px}
+  .s-tags{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 18px}
+  .s-tags span{font-size:11.5px;color:var(--ink-soft);border:1px solid var(--line);
+    border-radius:6px;padding:2px 8px}
+  .s-tags .theme{background:var(--ink);color:#fff;border-color:var(--ink);font-weight:600}
+  .s-sec{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--ink-soft);margin:0 0 8px;padding-top:6px;border-top:1px solid var(--line)}
+  .spk{display:flex;gap:11px;align-items:flex-start;margin-bottom:11px}
+  .spk .av{width:34px;height:34px;border-radius:50%;flex:none;background:var(--c);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;
+    font-family:"Bricolage Grotesque",sans-serif}
+  .spk .nm{font-weight:600;font-size:14.5px;line-height:1.2}
+  .spk .rl{font-size:12.5px;color:var(--ink-soft);line-height:1.25}
+  .spk .rl b{color:var(--ink);font-weight:600}
+  .s-summary-label{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink-soft);margin:2px 0 7px;padding-top:8px;border-top:1px solid var(--line)}
+  .s-desc{font-size:14.5px;line-height:1.62;color:var(--ink);margin:0 0 18px}
+  .s-note{font-size:12.5px;color:var(--ink-soft);margin:8px 0 16px;line-height:1.5}
+  .s-link{display:inline-flex;align-items:center;gap:6px;margin-top:10px;
+    font-family:"Inter",sans-serif;font-weight:600;font-size:14px;color:#fff;
+    background:var(--c);border-radius:999px;padding:11px 19px;text-decoration:none}
+  .s-link:hover{filter:brightness(.93)}
+
+  .footnote{max-width:var(--maxw);margin:30px auto 0;padding:0 20px;font-size:11.5px;
+    color:var(--ink-soft);font-family:"Space Mono",monospace}
+  .footnote + .footnote{margin-top:4px}
+  .footnote a{color:inherit;text-decoration:underline;text-decoration-thickness:1px;
+    text-underline-offset:2px}
+  .footnote a:hover{color:var(--ink)}
+  .toolbar{position:fixed;right:18px;bottom:18px;z-index:50}
+  .btn{font-family:"Inter",sans-serif;font-weight:600;font-size:14px;background:var(--ink);
+    color:#fff;border:none;border-radius:999px;padding:11px 19px;cursor:pointer;
+    box-shadow:0 6px 22px rgba(0,0,0,.22)}
+  .btn:hover{background:var(--main)}
+
+  @media (max-width:600px){
+    :root{--timew:40px;--u:17px}
+    .ev{padding:4px 5px;border-left-width:3px}
+    .ev h3{font-size:10.5px;-webkit-line-clamp:2}
+    .ev .etime,.ev .eorg{font-size:8.5px}
+    .ev.key h3{font-size:14px}
+    .tt-h{font-size:8.5px;padding:7px 1px}
+    .tt-h .bar{width:16px}
+    .sheet h2{font-size:21px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .sheet{transition:none}.scrim{transition:none}.ev{transition:none}
+  }
+  @media print{
+    :root{--paper:#fff;--u:13px}
+    body{padding:0;background:#fff}
+    .toolbar,.legend,.btn,.scrim,.sheet{display:none!important}
+    .masthead{padding:18px 12px 4px}
+    .day{padding:0 10px;page-break-before:always}
+    .day:first-of-type{page-break-before:avoid}
+    .tt-h{position:static}.ev,.tt{break-inside:avoid}.ev{cursor:default}
+  }
+</style>
+</head>
+<body>
+  <header class="masthead">
+    <div class="masthead-top">
+      <p class="eyebrow" data-i18n="eyebrow">Figma · San Francisco · Moscone</p>
+      <button class="lang-toggle" id="langToggle" aria-label="Switch language">
+        <span class="opt" data-opt="en">EN</span>
+        <span class="sep">/</span>
+        <span class="opt" data-opt="ja">日本語</span>
+      </button>
+    </div>
+    <h1 data-i18n-html="title">Config 2026<br><em>Agenda Timetable</em></h1>
+    <p class="sub" data-i18n-html="sub"></p>
+  </header>
+  <nav class="legend" id="legend"><span class="hint" data-i18n="stageHint">Stage</span></nav>
+  <main id="app"></main>
+  <p class="footnote" data-i18n="footnote">Source: config.figma.com/san-francisco/agenda · Times in PDT</p>
+  <p class="footnote">Hosted by <a href="https://github.com/NagaiKoki/figma-config-2026-schedule" target="_blank" rel="noopener">github.com/NagaiKoki/figma-config-2026-schedule</a></p>
+  <div class="toolbar"><button class="btn" id="printBtn" onclick="window.print()" data-i18n="printBtn">PDF / Print</button></div>
+
+  <div class="scrim" id="scrim"></div>
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="sheet-grip"></div>
+    <button class="sheet-close" id="sheetClose" data-i18n-aria="closeAria" aria-label="Close">×</button>
+    <div id="sheetBody"></div>
+  </div>
+
+<script>
+const STAGES={
+  main:{label:"Main",v:"--main"}, mezzanine:{label:"Mezzanine",v:"--mezzanine"},
+  level2:{label:"Level 2",v:"--level2"}, maker:{label:"Maker",v:"--maker"},
+  community:{label:"Community",v:"--community"}, labs:{label:"Learning Labs",v:"--labs"},
+  venue:{label:"Venue",v:"--venue"},
+};
+const ORDER=["main","mezzanine","level2","maker","community","labs"];
+
+let lang = (localStorage.getItem("lang") === "ja") ? "ja" : "en";
+const I18N = {
+  en: {
+    docTitle: "Config 2026 — Agenda Timetable",
+    eyebrow: "Figma · San Francisco · Moscone",
+    title: "Config 2026<br><em>Agenda Timetable</em>",
+    sub: "Vertical = <b>time</b>, horizontal = <b>stage</b>. Overlapping sessions sit side by side. Each block shows the <b>company</b>. <b>Tap</b> any session for speakers and details. All times in <b>PDT</b>.",
+    stageHint: "Stage",
+    footnote: "Source: config.figma.com/san-francisco/agenda · Times in PDT",
+    printBtn: "PDF / Print",
+    closeAria: "Close",
+    preDow: "Tue · Pre-show",
+    eventsCount: n => `${n} events`,
+    sessionsCount: n => `${n} sessions`,
+    summaryLabel: "Summary (paraphrased)",
+    speakersLabel: "Speakers",
+    noSummary: "No summary written yet for this session. Tap the link below for the official description.",
+    officialLink: "View official page ↗",
+    stageSuffix: " stage",
+  },
+  ja: {
+    docTitle: "Config 2026 — アジェンダ・タイムテーブル",
+    eyebrow: "Figma · San Francisco · Moscone",
+    title: "Config 2026<br><em>アジェンダ・タイムテーブル</em>",
+    sub: "縦が<b>時間軸</b>、横が<b>会場</b>。重なる時間帯のセッションは横に並びます。各ブロックには<b>会社名</b>を表示。<b>タップ</b>すると登壇者や詳細が出ます。時刻はすべて <b>PDT</b>。",
+    stageHint: "Stage",
+    footnote: "Source: config.figma.com/san-francisco/agenda · Times in PDT",
+    printBtn: "PDF / 印刷",
+    closeAria: "閉じる",
+    preDow: "Tue · Pre-show",
+    eventsCount: n => `${n} events`,
+    sessionsCount: n => `${n} sessions`,
+    summaryLabel: "概要（要約）",
+    speakersLabel: "Speakers",
+    noSummary: "このセッションの概要はまだ要約していません。下のリンクから公式の説明をご覧ください。",
+    officialLink: "公式ページで詳細を見る ↗",
+    stageSuffix: " stage",
+  },
+};
+const t = (k, ...args) => {
+  const v = I18N[lang][k];
+  return typeof v === "function" ? v(...args) : v;
+};
+
+const cv=k=>`var(${(STAGES[k]||STAGES.venue).v})`;
+function fmt(min){let h=Math.floor(min/60),m=min%60;const ap=h>=12?"PM":"AM";
+  let hh=h%12;if(hh===0)hh=12;return `${hh}:${String(m).padStart(2,"0")} ${ap}`;}
+function fmtRange(s,e){
+  const fa=fmt(s),fb=fmt(e);
+  const pa=fa.slice(-2),pb=fb.slice(-2);
+  return pa===pb ? `${fa.slice(0,-3)}–${fb.slice(0,-3)} ${pb}` : `${fa}–${fb}`;
+}
+const initials=n=>n.replace(/[^A-Za-z ]/g,"").trim().split(/\s+/).slice(0,2).map(w=>w[0]||"").join("").toUpperCase();
+
+const PRESHOW=[
+  {t:"9:00 AM – 7:00 PM",title:"Badge pickup",org:"Moscone North",stage:"venue",
+   desc:"Config バッジの受け取り。政府発行の身分証が必要。",
+   descEn:"Pick up your Config badge. Government-issued photo ID required."},
+  {t:"12:00 – 7:00 PM",title:"Config Commons",org:"Config Commons",stage:"venue",
+   desc:"Moscone 外のブロックを使ったコミュニティ・ハングアウト。バッジ受取・スワッグ・交流。",
+   descEn:"Community hangout on the block outside Moscone. Badge pickup, swag, and mingling."},
+  {t:"2:00 – 2:30 PM",title:"Config Makeathon Winners Showcase",org:"Figma × Contra",stage:"venue",
+   desc:"$100k の賞金がどのチーム／プロジェクトに渡るかを発表。Community Stage（屋外）。",
+   descEn:"Announcement of which team / project takes the $100k prize. Community Stage (outdoor)."},
+];
+
+const DAYS=[
+ {date:"June 24",dow:"Wed · Day 1",start:540,end:1020,sessions:[
+  {s:540,e:620,stage:"main",key:1,title:"Opening keynote — Figma product launch",org:"Figma",theme:"Keynote",topics:[],
+   spk:[{n:"Dylan Field",r:"CEO & Co-founder, <b>Figma</b>"},{n:"Jayse Hansen",r:"Fictional UI Design Director, <b>ØFFGRID</b>"}]},
+  {s:635,e:655,stage:"main",key:1,title:"The rules are the art: creating with AI",org:"Herndon Dryhurst Studio",theme:"Keynote",topics:["AI","Workflows"],
+   spk:[{n:"Holly Herndon",r:"Artist, <b>Herndon Dryhurst Studio</b>"}]},
+  {s:660,e:705,stage:"labs",title:"Lab: design to development workflows",org:"Figma",theme:"Process",topics:["Dev and code","Workflows","Beginner"],
+   spk:[{n:"Amy Lima",r:"Designer Advocate, <b>Figma</b>"},{n:"Riccardo Erra",r:"Developer Advocate, <b>Figma</b>"}]},
+  {s:670,e:730,stage:"main",title:"Figma deep dive",org:"Figma",theme:"Figma deep dive",topics:[],
+   spk:[{n:"Daniela Muntyan",r:"Product Designer, <b>Figma</b>"},{n:"Luca Damasco",r:"Manager, Software Engineering, <b>Figma</b>"},{n:"Dave Hornsby",r:"Product Manager, <b>Figma</b>"}]},
+  {s:670,e:690,stage:"level2",title:"Scooter, screen and duct-tape: from hack to habit",org:"Ather Energy",theme:"Process",topics:["Hardware","Prototyping"],
+   spk:[{n:"Unni Krishnan Manikoth",r:"Digital Experience Lead, <b>Ather Energy</b>"},{n:"Harish Kumar",r:"Product Designer, <b>Ather Energy</b>"}]},
+  {s:670,e:690,stage:"mezzanine",title:"Ready for the world",org:"Independent",theme:"Craft",topics:["Illustration","Storytelling"],
+   spk:[{n:"Vicki Tan",r:"Designer and Author"}]},
+  {s:670,e:690,stage:"maker",title:"From kickoff to canvas: connecting Google Workspace and Figma",org:"Google",theme:"Process",topics:["Workflows","AI","Product"],
+   spk:[{n:"Addison Rodomista",r:"UX Design Lead, <b>Google</b>"},{n:"Chloe Fagan-Tucker",r:"Workspace BD & Strategic Partnerships, <b>Google</b>"}]},
+  {s:690,e:710,stage:"mezzanine",title:"Dimensional shift: sculpting in Figma Draw",org:"Independent",theme:"Craft",topics:["Illustration","Visual design"],
+   spk:[{n:"Josh McKenna",r:"Independent Illustrator"}]},
+  {s:690,e:710,stage:"level2",title:"Beyond design systems: designing for robots and seniors",org:"Norbert Health",theme:"Process",topics:["AI","Prototyping","Research","Accessibility"],
+   spk:[{n:"Anna Oh",r:"Head of Product and Design, <b>Norbert Health</b>"}]},
+  {s:710,e:730,stage:"maker",title:"How to build content systems for AI product workflows",org:"Ditto",theme:"Process",topics:["AI","Content design","UX"],
+   spk:[{n:"Jessica Ouyang",r:"Co-founder, <b>Ditto</b>"},{n:"Jolena Ma",r:"Co-founder, <b>Ditto</b>"}]},
+  {s:710,e:730,stage:"level2",title:"Figma meets hardware: prototyping for the physical world",org:"Electrolux",theme:"Process",topics:["Hardware","Prototyping"],
+   spk:[{n:"Frederik Ueberschär",r:"Senior Designer for Creative Technology, <b>Electrolux</b>"},{n:"Sam Thorne",r:"Senior Principal Designer for Creative Technology, <b>Electrolux</b>"}]},
+  {s:710,e:730,stage:"mezzanine",title:"Out of sync, on purpose: desktop design after mobile won",org:"Spotify",theme:"Craft",topics:["UX","Workflows"],
+   spk:[{n:"Giulio Fagiolini",r:"Staff Designer, <b>Spotify</b>"}]},
+  {s:720,e:765,stage:"labs",title:"Lab: the many ways to make with Figma Make",org:"Figma",theme:"Process",topics:["AI","Workflows","All skill levels"],
+   spk:[{n:"Alexia Danton",r:"Designer Advocate, <b>Figma</b>"},{n:"Brett McMillin",r:"Designer Advocate, <b>Figma</b>"}]},
+  {s:730,e:750,stage:"mezzanine",title:"Writing for humans in an AI world",org:"Anthropic",theme:"Strategy",topics:["Content design","AI"],
+   spk:[{n:"Chelsea Larsson",r:"Content Design, <b>Anthropic</b>"}]},
+  {s:750,e:770,stage:"level2",title:"Be the director: how stage craft informs product craft",org:"OpenAI",theme:"Process",topics:["Storytelling","Product"],
+   spk:[{n:"Kim Beverett",r:"Product Manager, <b>OpenAI</b>"}]},
+  {s:750,e:770,stage:"maker",title:"From concept to confidence with Dscout AI",org:"Dscout",theme:"Process",topics:["AI","Research"],
+   spk:[{n:"Lauren Madura",r:"Director of Product Design, <b>Dscout</b>"},{n:"Michael Winnick",r:"CEO & founder, <b>Dscout</b>"}]},
+  {s:770,e:790,stage:"level2",title:"Skill issue: how we built an OS for PMs at Figma",org:"Figma",theme:"Process",topics:["AI","Product","Workflows"],
+   spk:[{n:"Jinen Kamdar",r:"Product Lead, <b>Figma</b>"},{n:"Lawrence Luk",r:"Product Technical Program Manager, <b>Figma</b>"}]},
+  {s:775,e:795,stage:"mezzanine",title:"Designing the product that can do anything",org:"Boston Dynamics",theme:"Strategy",topics:["Hardware","Research","Prototyping"],
+   spk:[{n:"Brian Ringley",r:"Distinguished PM & HRI Designer, <b>Boston Dynamics</b>"}]},
+  {s:780,e:825,stage:"labs",title:"Lab: bringing designs to life",org:"Figma",theme:"Craft",topics:["Product","Workflows","All skill levels"],
+   spk:[{n:"Miggi",r:"Designer Advocate, Education, <b>Figma</b>"}]},
+  {s:790,e:830,stage:"main",title:"Figma deep dive",org:"Figma",theme:"Figma deep dive",topics:[],
+   spk:[{n:"Tammy Taabassum",r:"Product Designer, <b>Figma</b>"},{n:"Rodrigo Davies",r:"Product Lead, Agents, <b>Figma</b>"}]},
+  {s:795,e:815,stage:"mezzanine",title:"Prompts to fashion: AI-powered 3D-printed garments",org:"3D-Printed Fashion Lab",theme:"Craft",topics:["Scale","AI","Workflows"],
+   spk:[{n:"Danit Peleg",r:"Founder, <b>3D-Printed Fashion Lab</b>"}]},
+  {s:830,e:850,stage:"maker",title:"Hacking AI for creative operations at scale",org:"Systematiq AI",theme:"Process",topics:["AI","Scale","Workflows"],
+   spk:[{n:"Rory Flynn",r:"Founder, <b>Systematiq AI</b>"}]},
+  {s:840,e:870,stage:"main",title:"Figma deep dive",org:"Figma",theme:"Figma deep dive",topics:[],
+   spk:[{n:"Georgia Rust",r:"Manager, Product Management, <b>Figma</b>"},{n:"Avery Frankenberg",r:"Software Engineer, <b>Figma</b>"},{n:"Jason Calleiro",r:"Product Designer, <b>Figma</b>"}]},
+  {s:840,e:885,stage:"labs",title:"Lab: unlocking speed and visual expression",org:"Figma",theme:"Craft",topics:["Visual design","Workflows","Beginner"],
+   spk:[{n:"Hugo Raymond",r:"Designer Advocate, <b>Figma</b>"},{n:"Mallory Dean",r:"Designer Advocate, <b>Figma</b>"}]},
+  {s:850,e:870,stage:"community",title:"The most important component: community",org:"Figma",theme:"Process",topics:["AI","Product","Storytelling"],
+   spk:[{n:"Alicia Kranjc",r:"Figma Community Product Manager, <b>Figma</b>"}]},
+  {s:855,e:875,stage:"level2",title:"From handoffs to upstream",org:"EDL",theme:"Design systems",topics:["Dev and code","UX"],
+   spk:[{n:"Frederick Andersen",r:"Founder, <b>EDL</b>"}]},
+  {s:870,e:890,stage:"maker",title:"How structured thinking gives your AI superpowers",org:"Atlassian",theme:"Process",topics:["AI","Workflows"],
+   spk:[{n:"Carola Pescio Canale",r:"Head of Design, AI, <b>Atlassian</b>"}]},
+  {s:875,e:895,stage:"level2",title:"The metacognitive design loop",org:"Epsilon / Publicis Groupe",theme:"Design systems",topics:["Dev and code","AI"],
+   spk:[{n:"Jenny Au",r:"Team Lead, UX QA Engineering, <b>Epsilon / Publicis Groupe</b>"},{n:"Mike Green",r:"Team Lead, Product Design, <b>Epsilon / Publicis Groupe</b>"}]},
+  {s:880,e:900,stage:"community",title:"Human methods, new material: designing with AI for the classroom",org:"Goodnotes",theme:"Strategy",topics:["AI","Product","UX"],
+   spk:[{n:'Mubarak "Moby" Marafa',r:"Staff Product Designer, <b>Goodnotes</b>"},{n:"Wendy Liao",r:"Learning & Development Specialist, <b>Goodnotes</b>"}]},
+  {s:885,e:905,stage:"mezzanine",title:"The edge case is everyone",org:"T-Mobile / Kettle",theme:"Strategy",topics:["UX","Accessibility"],
+   spk:[{n:"Willie King",r:"Business Development Manager, <b>T-Mobile</b>"},{n:"Lex Liley",r:"Associate Director, Product Strategy, <b>Kettle</b>"}]},
+  {s:885,e:915,stage:"main",title:"Figma deep dive",org:"Figma",theme:"Figma deep dive",topics:[],
+   spk:[{n:"Yassir Solomah",r:"Software Engineering Manager, <b>Figma</b>"},{n:"Piers Cowburn",r:"Director of Engineering, Expressive Design, <b>Figma</b>"},{n:"Rogie King",r:"Product Designer, <b>Figma</b>"}]},
+  {s:895,e:915,stage:"level2",title:"Your best practices are trapped in your head—and your AI has no idea",org:"Microsoft",theme:"Process",topics:["AI","Workflows"],
+   spk:[{n:"Harald Kirschner",r:"Principal Product Manager, <b>Microsoft</b>"}]},
+  {s:905,e:925,stage:"mezzanine",title:"ESPN's migration playbook: the move to Figma with One North",org:"ESPN / One North",theme:"Design systems",topics:["Scale","Brand"],
+   spk:[{n:"Elliott Muñoz",r:"Creative Director, <b>ESPN Creative Studio</b>"},{n:"Matt Rogers",r:"Product Design Lead, <b>One North</b>"}]},
+  {s:910,e:930,stage:"maker",title:"Build like it's 2030. Listen like you mean it.",org:"Great Question",theme:"Process",topics:["AI","Research"],
+   spk:[{n:"Ned Dwyer",r:"CEO & Co-founder, <b>Great Question</b>"}]},
+  {s:910,e:930,stage:"community",title:"Prototypes, failures, and unexpected breakthroughs",org:"Figma",theme:"Craft",topics:["Prototyping","Dev and code"],
+   spk:[{n:"Noah Finer",r:"Software Engineer, <b>Figma</b>"}]},
+  {s:925,e:945,stage:"mezzanine",title:"Reimagining NASA.gov to tell Earth's most important stories",org:"Blink UX / Greenlight",theme:"Process",topics:["Workflows","UX"],
+   spk:[{n:"Ben Shown",r:"Head of Design, <b>Blink UX</b>"},{n:"Megan Greco",r:"Senior Design Lead, <b>Greenlight</b>"}]},
+  {s:960,e:1020,stage:"main",key:1,title:"Closing keynote",org:"Multiple",theme:"Keynote",topics:["Motion design","Dev and code","Workflows","AI"],
+   spk:[{n:"Patrick Flaherty",r:"Senior Motion Designer, <b>Microsoft</b>"},{n:"Tommy Geoco",r:"Storyteller, <b>UX Tools</b>"},{n:"Catt Small",r:"Staff Product Designer, <b>Dropbox</b>"},{n:"Matt D. Smith",r:"CEO, <b>Shift Nudge</b>"},{n:"Rasmus Andersson",r:"Software Painter, <b>Playbit</b>"}]},
+ ]},
+ {date:"June 25",dow:"Thu · Day 2",start:540,end:1110,sessions:[
+  {s:540,e:600,stage:"main",key:1,title:"Opening keynotes",org:"3Blue1Brown",theme:"Keynote",topics:["Visual design","Dev and code","Storytelling","Workflows"],
+   spk:[{n:"Grant Sanderson",r:"YouTube educator, <b>3Blue1Brown</b>"},{n:"Switch Angel + LO.FI.SCI.FI",r:"Artists & Software Engineers"}]},
+  {s:615,e:660,stage:"labs",title:"Lab: upskill on skills and agentic workflows",org:"Figma",theme:"Process",topics:["Dev and code","AI","Intermediate","Advanced"],
+   spk:[{n:"Laura Fehre",r:"Designer Advocate, <b>Figma</b>"},{n:"Manish Kumar",r:"Developer Advocate, <b>Figma</b>"}]},
+  {s:615,e:675,stage:"main",title:"Figma deep dive",org:"Figma",theme:"Figma deep dive",topics:[],
+   spk:[{n:"Elle Shwer",r:"Product Manager, <b>Figma</b>"},{n:"Iris Lin",r:"Product Designer, <b>Figma</b>"},{n:"Nikolas Klein",r:"Product Manager, <b>Figma</b>"},{n:"Ben Chen",r:"Engineering Manager, <b>Figma</b>"}]},
+  {s:615,e:635,stage:"maker",title:"Designing in the age of the 10x engineer",org:"Google",theme:"Process",topics:["AI","UX","Product"],
+   spk:[{n:"Andy Zhang",r:"Design Engineer Lead, <b>Google</b>"}]},
+  {s:620,e:640,stage:"mezzanine",title:"10 years of daily sketching",org:"MIT Media Lab",theme:"Craft",topics:["Storytelling","Visual design","Workflows"],
+   spk:[{n:"Zach Lieberman",r:"Artist, <b>MIT Media Lab</b>"}]},
+  {s:630,e:650,stage:"level2",title:"The invisible mechanisms in your interfaces",org:"mutter.co",theme:"Craft",topics:["UX","Research"],
+   spk:[{n:"Johannes Mutter",r:"Design Engineer, <b>mutter.co</b>"}]},
+  {s:640,e:660,stage:"mezzanine",title:"The world of street art and care-filled design",org:"First Amendment",theme:"Process",topics:["Illustration","Visual design"],
+   spk:[{n:"Ella Rochelle-Lawton",r:"Project & Program Manager, <b>First Amendment</b>"}]},
+  {s:650,e:670,stage:"level2",title:"Dense by design",org:"mu.design",theme:"Craft",topics:["Visual design","UX"],
+   spk:[{n:"Matthew Ström-Awn",r:"Founder, <b>mu.design</b>"}]},
+  {s:650,e:670,stage:"maker",title:"Building real-time user insights into your design workflow",org:"HeyMarvin",theme:"Process",topics:["Research","Workflows","UX"],
+   spk:[{n:"Prayag Narula",r:"CEO & Co-Founder, <b>HeyMarvin</b>"}]},
+  {s:660,e:680,stage:"mezzanine",title:"Managing multiple creative passions in a world that tells you to specialize",org:"Hom Sweet Hom",theme:"Craft",topics:["Brand","Storytelling"],
+   spk:[{n:"Lauren Hom",r:"Lettering Artist & Designer, <b>Hom Sweet Hom</b>"}]},
+  {s:670,e:690,stage:"level2",title:"Usernames on Instagram: how a craft fix became an identity crisis",org:"Instagram (Meta)",theme:"Craft",topics:["Content design","UX","Storytelling"],
+   spk:[{n:"Rose McManus",r:"Content Designer, <b>Instagram (Meta)</b>"}]},
+  {s:685,e:705,stage:"maker",title:"AI will upend your process—for the better",org:"Bitovi",theme:"Process",topics:["AI","UX"],
+   spk:[{n:"Justin Meyer",r:"CEO, <b>Bitovi</b>"}]},
+  {s:690,e:710,stage:"level2",title:"The future is low-tech: lessons from the early 2000s",org:"The Lifestyle Lab",theme:"Process",topics:["UX"],
+   spk:[{n:"Jésabel DC",r:"Tech Anthropologist & EdTech Founder, <b>The Lifestyle Lab</b>"}]},
+  {s:690,e:735,stage:"labs",title:"Lab: express yourself with Figma Draw",org:"Figma",theme:"Craft",topics:["Illustration","Visual design","All skill levels"],
+   spk:[{n:"Laura Butvinik",r:"Manager, Education Content Strategy, <b>Figma</b>"},{n:"Rachel Platt",r:"Education Designer, <b>Figma</b>"},{n:"Kristen Bates",r:"Education Content Strategist, <b>Figma</b>"}]},
+  {s:735,e:780,stage:"main",title:"Figma deep dive: inside the Weave workflow",org:"Figma",theme:"Figma deep dive",topics:["AI","Workflows","Visual design"],
+   spk:[{n:"Gal Sharir",r:"Product Designer, <b>Figma</b>"},{n:"Ron Baranov",r:"Creative Workflow Advocate, <b>Figma</b>"}]},
+  {s:765,e:785,stage:"mezzanine",title:"The canvas is not dead",org:"Dropbox",theme:"Process",topics:["AI","UX","Workflows"],
+   spk:[{n:"Catt Small",r:"Staff Product Designer, <b>Dropbox</b>"}]},
+  {s:765,e:785,stage:"maker",title:"Quirk up your workplace",org:"GitHub",theme:"Process",topics:["Storytelling"],
+   spk:[{n:"Darby Thomas",r:"Senior Product Designer, <b>GitHub</b>"}]},
+  {s:765,e:810,stage:"labs",title:"Lab: workflow tips—from slow to flow",org:"Figma",theme:"Process",topics:["Workflows","Prototyping","Beginner"],
+   spk:[{n:"Chad Bergman",r:"Designer Advocate, <b>Figma</b>"},{n:"Michel Ferreira",r:"Designer Advocate, <b>Figma</b>"}]},
+  {s:770,e:790,stage:"level2",title:"Everyone's still eating: building Notion's design system",org:"Notion",theme:"Design systems",topics:["Dev and code","Scale","Workflows"],
+   spk:[{n:"Tamara Chu",r:"Design Engineer, <b>Notion</b>"},{n:"Shauna Sapper",r:"Software Engineer, <b>Notion</b>"}]},
+  {s:790,e:810,stage:"community",title:"In praise of dark mode",org:"Attio",theme:"Design systems",topics:["Visual design","UX"],
+   spk:[{n:"Mehmet Aydın Baytaş",r:"Senior Design Engineer, <b>Attio</b>"}]},
+  {s:790,e:810,stage:"level2",title:"Preparing Rocket for the AI era",org:"Rocket",theme:"Design systems",topics:["AI","Dev and code","Scale"],
+   spk:[{n:"Emily Strobl",r:"Director, Product Design — AI & Design Systems, <b>Rocket</b>"},{n:"Will Hobick",r:"Design Engineering Lead, <b>Rocket</b>"}]},
+  {s:800,e:820,stage:"maker",title:"Designing with confidence in an AI-powered world",org:"UserTesting",theme:"Strategy",topics:["AI","Research","UX"],
+   spk:[{n:"Bobby Meixner",r:"VP, Solution Marketing, <b>UserTesting</b>"}]},
+  {s:810,e:830,stage:"level2",title:"Designed to be read: making a system AI can actually use",org:"Meta",theme:"Design systems",topics:["AI","Workflows","Prototyping"],
+   spk:[{n:"Harvey Whiting",r:"Product Designer, <b>Meta</b>"}]},
+  {s:820,e:840,stage:"community",title:"Designing brand intelligence: from rules to expression",org:"Let's Jetty",theme:"Process",topics:["Brand","AI","Workflows"],
+   spk:[{n:"Nicole Martinez",r:"Co-founder, <b>Let's Jetty</b>"}]},
+  {s:825,e:855,stage:"main",title:"Figma deep dive",org:"Figma",theme:"Figma deep dive",topics:[],
+   spk:[{n:"Brett McMillin",r:"Designer Advocate, <b>Figma</b>"},{n:"Laura Fehre",r:"Designer Advocate, <b>Figma</b>"}]},
+  {s:840,e:900,stage:"labs",title:"Lab: build your first Weave workflow",org:"Figma",theme:"Process",topics:["AI","Workflows","Beginner","Intermediate"],
+   spk:[{n:"Moran Dankner",r:"Creative Workflow Advocate, <b>Figma</b>"},{n:"Ken Vreman",r:"Senior Design Advocate, <b>Figma</b>"}]},
+  {s:845,e:865,stage:"mezzanine",title:"Own the loop: how designers and researchers win with AI evals",org:"Figma",theme:"Strategy",topics:["AI","Research","UX"],
+   spk:[{n:"Setor Zilevu",r:"Researcher, <b>Figma</b>"}]},
+  {s:850,e:870,stage:"community",title:"Gnarly by design: building systems with grit",org:"Publix",theme:"Design systems",topics:["Visual design","UX","Scale"],
+   spk:[{n:"Beau Wingfield",r:"Visual Product Designer, <b>Publix</b> (ex-EA)"}]},
+  {s:855,e:885,stage:"main",title:"Figma deep dive",org:"Figma",theme:"Figma deep dive",topics:[],
+   spk:[{n:"Jake Albaugh",r:"Developer Advocate, <b>Figma</b>"}]},
+  {s:855,e:875,stage:"level2",title:"300GB story: how to inspire action when data isn't enough",org:"Harvard University",theme:"Process",topics:["Research","Storytelling"],
+   spk:[{n:"Luke Fiorante",r:"Design Engineer, <b>Harvard University</b>"},{n:"Sirinda Limsong",r:"Product Designer, <b>Harvard University</b>"}]},
+  {s:865,e:885,stage:"mezzanine",title:"Design for the future of apps",org:"Google",theme:"Process",topics:["AI","UX","Dev and code"],
+   spk:[{n:"Craig Labenz",r:"Developer Relations Engineer, <b>Google</b>"}]},
+  {s:875,e:895,stage:"level2",title:"The marathon designer: creative endurance beyond prompts and pixels",org:"Quintessential",theme:"Process",topics:["UX","Storytelling"],
+   spk:[{n:"Socrates Charisis",r:"Founder & Designer, <b>Quintessential</b>"}]},
+  {s:880,e:900,stage:"community",title:"Don't forget the feeling: a critique of software in 2026",org:"Figma",theme:"Craft",topics:["Brand","AI"],
+   spk:[{n:"Luis Ouriach",r:"Designer Advocate, <b>Figma</b>"}]},
+  {s:885,e:905,stage:"mezzanine",title:"Designing money: how to build a trustworthy brand in the age of AI",org:"Plaid",theme:"Process",topics:["Brand","AI","Visual design"],
+   spk:[{n:"Chris Warner",r:"Creative Lead, Brand Studio, <b>Plaid</b>"}]},
+  {s:895,e:915,stage:"level2",title:"Design systems anarchy",org:"Mercury",theme:"Design systems",topics:["Storytelling","AI","Scale"],
+   spk:[{n:"Lauren LoPrete",r:"Head of Design Foundations, <b>Mercury</b>"}]},
+  {s:905,e:925,stage:"mezzanine",title:"Legibility by design",org:"Waymo",theme:"Strategy",topics:["AI","UX","Product"],
+   spk:[{n:"Ryan Powell",r:"Head of Design, <b>Waymo</b>"}]},
+  {s:960,e:1020,stage:"main",key:1,title:"Closing keynote — Death of the finished state",org:"Special Offer / RAC",theme:"Keynote",topics:["Brand","Visual design","Storytelling","AI"],
+   spk:[{n:"Brent David Freaney",r:"Art Director, <b>Special Offer, Inc.</b>"},{n:"André Anjos",r:"Artist, <b>RAC</b>"}]},
+  {s:1020,e:1110,stage:"main",key:1,venue:1,title:"Closing happy hour",org:"Config Commons",theme:"Social",topics:[],
+   spk:[],desc:"Config Commons でのクロージング・ハッピーアワー。新しいつながりに乾杯。18:30まで。",
+   descEn:"Closing happy hour at Config Commons. Raise a glass to new connections — runs until 6:30 PM."},
+ ]},
+];
+
+// flat index for modal lookup
+const ALL=[];
+PRESHOW.forEach(p=>{p._pre=1;ALL.push(p)});
+DAYS.forEach(d=>d.sessions.forEach(s=>ALL.push(s)));
+ALL.forEach((x,i)=>x._id=i);
+
+// title -> {u: id, ev: is /event/ link, d: paraphrased summary (Japanese), de: English version}
+const EXTRA={
+ "Badge pickup":{u:"ccc9794a-d870-47e7-a370-8d855270012b",ev:1},
+ "Config Commons":{u:"f0a6d1fb-cb12-4d50-8ac9-daa8c5417654",ev:1},
+ "Config Makeathon Winners Showcase":{u:"52f50783-e30a-4a98-9039-fab3d9f04fa4",ev:1},
+ "Closing happy hour":{u:"789dfa39-dfdf-4f0b-9c6b-b52fefe7b975",ev:1},
+ "Opening keynote — Figma product launch":{u:"829e6ced-3257-4f5c-b675-aa72f4d1f98f"},
+ "The rules are the art: creating with AI":{u:"94c665ce-4b37-4127-b49a-425ac25319a2",d:"AIでの創作を「Protocol Art」＝作品が生まれる条件（ルールセット）を設計する営みとして捉える。モデルづくり自体が著作になる、という視点を Holly+ などの実践から語る。",de:"Reframes AI-making as 'Protocol Art' — designing the conditions (the rule set) under which work emerges. Argues that building the model itself is the artwork, drawing on Holly+ and related projects."},
+ "Lab: design to development workflows":{u:"caaf2c7f-ce7c-42f5-963f-93e20bcccbf4"},
+ "Scooter, screen and duct-tape: from hack to habit":{u:"923b7644-6bbb-4260-97a1-446cb2f05daf",d:"ありもの（Arduino・iPad・Figma）で自作した道具を使う「ダクトテープ式プロトタイピング」。雑でも速い実験でアイデアを検証し、関係者を動かす考え方。",de:"'Duct-tape prototyping' with off-the-shelf gear (Arduino, iPad, Figma). Quick-and-dirty experiments to validate ideas and get stakeholders moving."},
+ "Ready for the world":{u:"e220cef8-e2a0-4384-b9a7-bf6a0b23274a",d:"プロダクトデザイナーが、意思決定をテーマにした絵本を出版するまでの試行錯誤。ツールと自分を信じれば形にできる、という話。",de:"A product designer's journey to publishing a children's book on decision-making. The takeaway: trust your tools and yourself, and you can ship it."},
+ "From kickoff to canvas: connecting Google Workspace and Figma":{u:"ee548465-66ff-48ed-a86b-ee55e0be22f2",d:"（公式で詳細は後日公開）Google Workspace と Figma をつなぐワークフローのセッション。",de:"(Official details forthcoming.) A session on workflows that connect Google Workspace and Figma."},
+ "Dimensional shift: sculpting in Figma Draw":{u:"274b9aeb-8c3a-49b2-b241-325ec5b50487",d:"スランプを新しい道具（Figma Draw）で乗り越えた話。2Dベクターで3Dの奥行きを出す手法と、初心者に戻ることの効用。",de:"Climbing out of a creative slump with a new tool (Figma Draw). Techniques for giving 2D vectors a 3D feel — and the value of being a beginner again."},
+ "Beyond design systems: designing for robots and seniors":{u:"979a7614-45e1-43a4-82d6-a0e2ef8cbed8",d:"高齢者ケア用のロボットを設計。患者や看護師と Figma の試作で検証し、あえてクマの顔に。デザインは部品ではなく「つながり」だという主張。",de:"Designing a senior-care robot. Tested with patients and nurses through Figma prototypes — and intentionally ended up with a bear's face. Argues design is connection, not parts."},
+ "How to build content systems for AI product workflows":{u:"520fcaa6-76e0-4703-89b0-9f4dfb9a91de",d:"誰もがコピーを量産する時代に、ガイドラインから一貫した文言を生成し逸脱を検知する「コピーの真実源」を Figma Make と Ditto で組むワークショップ。",de:"In an era where everyone churns out copy, build a 'source of truth' that generates consistent strings from your guidelines and flags drift. Workshop with Figma Make + Ditto."},
+ "Figma meets hardware: prototyping for the physical world":{u:"93485c8d-f1b1-45b3-bdca-a24e0c0bd94c",d:"Figma で家電を設計。市販の電子部品で「Figma Displays」を作り、試作を実機画面に投影。フィードバックを6か月から2分に短縮した手法。",de:"Designing home appliances in Figma. Built 'Figma Displays' from off-the-shelf electronics so prototypes show up on real device screens — collapsing feedback loops from six months to two minutes."},
+ "Out of sync, on purpose: desktop design after mobile won":{u:"eb8fbae1-7cdf-420c-bfbe-cd676fccd1d0",d:"Spotify デスクトップ版の設計。モバイルを1:1で写さず、集中・没入というデスクトップの強みに合わせて作り込む小さなチームの工夫。",de:"Designing Spotify for desktop. Instead of mirroring mobile 1:1, a small team leans into desktop's strengths — focus and immersion — and tailors the experience accordingly."},
+ "Lab: the many ways to make with Figma Make":{u:"ec2fc49f-9d34-46c8-9086-8887cab3bef2"},
+ "Writing for humans in an AI world":{u:"47d280de-e85a-4e10-b6e6-b97734490e9f",d:"Anthropic のコンテンツデザインは、Claude の返答ではなくその周辺（プロンプト例・UI文言・名称・ボイス）を設計する。自然言語UIで変わる文章設計の話。",de:"At Anthropic, content design isn't about Claude's replies — it's about everything around them: prompt examples, UI copy, naming, and voice. How writing changes when the interface itself is natural language."},
+ "Be the director: how stage craft informs product craft":{u:"8f2835f5-9701-4834-9237-0621882953fa",d:"舞台の演出家のように考える。意図的な選択をし、脚本の譲れない点を定め、プロダクトの背骨を見つける。",de:"Think like a stage director. Make intentional choices, define the script's non-negotiables, and find your product's spine."},
+ "From concept to confidence with Dscout AI":{u:"a9ed6f89-a852-48bf-9f6c-245dab895b87"},
+ "Skill issue: how we built an OS for PMs at Figma":{u:"5d27f158-dd26-4f34-b7e0-991224db8b7a"},
+ "Designing the product that can do anything":{u:"ac133b2f-2b12-42b3-8cbc-d9c27e0c1195"},
+ "Lab: bringing designs to life":{u:"a9724310-a83e-4b29-90b4-cce61cfa3ea6"},
+ "Prompts to fashion: AI-powered 3D-printed garments":{u:"349f94c6-628e-40ff-9f90-119750e60bfa"},
+ "Hacking AI for creative operations at scale":{u:"e49d78e2-a2ff-4b10-98bc-47bd6cec2d48"},
+ "Lab: unlocking speed and visual expression":{u:"6122f91d-d899-4a5a-b542-549b1ffd31ba"},
+ "The most important component: community":{u:"b8b2cb7e-706f-4d96-aa85-24c40ab6c9d9"},
+ "From handoffs to upstream":{u:"9d0af264-b7d0-4442-be81-26aef7ea89ca"},
+ "How structured thinking gives your AI superpowers":{u:"ca0448a6-6274-455e-b32e-7ed465ed8e7a"},
+ "The metacognitive design loop":{u:"6c44950a-077d-47bf-bad1-8cc71f995957"},
+ "Human methods, new material: designing with AI for the classroom":{u:"571df27c-3044-4342-96d2-ae016ce9c3b4"},
+ "The edge case is everyone":{u:"248c6563-329e-4eee-9271-de8fa416a85e"},
+ "Your best practices are trapped in your head—and your AI has no idea":{u:"dbf85ddc-ab1f-41cf-8b33-e488f14b55a7"},
+ "ESPN's migration playbook: the move to Figma with One North":{u:"5ec10ea1-ecd4-4ccc-ab98-bc3ccd03137f"},
+ "Build like it's 2030. Listen like you mean it.":{u:"24762e47-798d-47d7-83fd-7ae7c2d0d412"},
+ "Prototypes, failures, and unexpected breakthroughs":{u:"b9992211-46a6-4f20-b7b1-358a8d23e352"},
+ "Reimagining NASA.gov to tell Earth's most important stories":{u:"1a2f5f6c-dc7f-431b-acc7-5fd16befe8b4"},
+ "Closing keynote":{u:"e8ea736f-5159-46d9-bed5-49855d992a91"},
+ "Opening keynotes":{u:"6c5a7b92-88f7-42d7-9ddc-b67cb35ec4ab"},
+ "Lab: upskill on skills and agentic workflows":{u:"1b7a9cce-f147-4d99-8755-717fc70b8575"},
+ "Designing in the age of the 10x engineer":{u:"49406317-eda9-427a-84f6-c88b24857ed8"},
+ "10 years of daily sketching":{u:"702164d5-9654-468e-9e8a-eeb3ef609fe7"},
+ "The invisible mechanisms in your interfaces":{u:"cb25f8b3-31db-4849-a799-d02a2f052f5c"},
+ "The world of street art and care-filled design":{u:"d4956efb-26bd-4c93-97c6-9ef7fdd72305"},
+ "Dense by design":{u:"69636242-b6b2-4b27-a831-bfd73eed654f"},
+ "Building real-time user insights into your design workflow":{u:"ddcc3459-4bc6-43d4-8aba-103c1870e703"},
+ "Managing multiple creative passions in a world that tells you to specialize":{u:"320859cb-ec55-495e-aeef-2cb7beea60cd"},
+ "Usernames on Instagram: how a craft fix became an identity crisis":{u:"5d1f7e2d-c6f5-4001-b2c7-23f70a9f92d9"},
+ "AI will upend your process—for the better":{u:"b751e092-79d1-4082-9c8f-aeeba6ec3b0e"},
+ "The future is low-tech: lessons from the early 2000s":{u:"79c76468-0c48-41ae-8775-7a46d4409bb3"},
+ "Lab: express yourself with Figma Draw":{u:"9db83287-aa02-4fb5-9a5f-b18916098e8f"},
+ "Figma deep dive: inside the Weave workflow":{u:"82e928ab-95f0-46a3-b6f1-157a5f6fff00"},
+ "The canvas is not dead":{u:"3a3146f3-98c6-40e7-a09b-ff3c606bf5c1",d:"「キャンバスは死んでいない」。文脈の深い大規模プロダクトでは手を動かして考える価値があり、何を自分で探索し何をAIに渡すかの判断軸を示す。",de:"'The canvas isn't dead.' On deep, large-scale products there's still value in thinking with your hands — and a rubric for what to explore yourself vs. hand off to AI."},
+ "Quirk up your workplace":{u:"8d8c083f-75c5-4595-ba5d-c8c2809ec350"},
+ "Lab: workflow tips—from slow to flow":{u:"cdacc08f-a60e-4ece-bb3b-6b186a3a9dfc"},
+ "Everyone's still eating: building Notion's design system":{u:"9bbf68e9-0644-48df-9b6c-f4ad1827a146"},
+ "In praise of dark mode":{u:"404d5692-4463-4304-b74c-723a71e491a1"},
+ "Preparing Rocket for the AI era":{u:"cc9f82eb-31cd-4bd3-93db-bb060c95a6ac"},
+ "Designing with confidence in an AI-powered world":{u:"f9a5d27e-b1c3-4674-92ee-0545d7822fc0"},
+ "Designed to be read: making a system AI can actually use":{u:"c856c21b-317e-482c-8a3f-f01280aeed56"},
+ "Designing brand intelligence: from rules to expression":{u:"b14b91d9-50d9-4081-a943-51f331a2b4b4"},
+ "Lab: build your first Weave workflow":{u:"f94f6215-0d25-4b2e-8b14-7e00a74588e6"},
+ "Own the loop: how designers and researchers win with AI evals":{u:"2bb4e5de-dbaf-47c5-8c12-b58e5728ab62"},
+ "Gnarly by design: building systems with grit":{u:"c6c9fdb6-0e45-4b0e-b966-76675517b045"},
+ "300GB story: how to inspire action when data isn't enough":{u:"e2b0051f-0b4a-4860-bca5-71e668b04bd9"},
+ "Design for the future of apps":{u:"d942bacb-600a-437f-817a-6d61794a930d"},
+ "The marathon designer: creative endurance beyond prompts and pixels":{u:"7856aab8-4ce1-430a-8066-efae860ffa60"},
+ "Don't forget the feeling: a critique of software in 2026":{u:"4b523a98-9e0e-4b9e-8783-c405ab892602"},
+ "Designing money: how to build a trustworthy brand in the age of AI":{u:"a2fa6160-4f88-4215-a6e9-f91c78ee3d51"},
+ "Design systems anarchy":{u:"ace52d61-6725-4338-80c9-cd8b0e8757e4"},
+ "Legibility by design":{u:"b2201a51-7000-4303-a371-ce00f5d9e2ed"},
+ "Closing keynote — Death of the finished state":{u:"2327c9de-d189-4b98-b49c-79bffa38b723"},
+};
+const sessionUrl=x=>{const m=EXTRA[x.title];return m?`https://config.figma.com/san-francisco/${m.ev?"event":"session"}/${m.u}/`:null;};
+
+const hidden=new Set();
+
+function buildLegend(){
+  const nav=document.getElementById("legend");
+  ORDER.forEach(key=>{
+    const b=document.createElement("button");
+    b.className="chip";b.setAttribute("aria-pressed","true");
+    b.style.setProperty("--c",cv(key));
+    b.innerHTML=`<span class="dot"></span>${STAGES[key].label}`;
+    b.onclick=()=>{hidden.has(key)?hidden.delete(key):hidden.add(key);
+      b.setAttribute("aria-pressed",hidden.has(key)?"false":"true");render();};
+    nav.appendChild(b);
+  });
+}
+
+function render(){
+  const app=document.getElementById("app");app.innerHTML="";
+
+  const pre=document.createElement("section");pre.className="day";
+  pre.innerHTML=`<div class="day-head"><span class="day-date">June 23</span>
+    <span class="day-dow">${t("preDow")}</span><span class="day-meta">${t("eventsCount",PRESHOW.length)}</span></div>
+    <div class="preshow">${PRESHOW.map(p=>`<div class="pre-card" data-id="${p._id}">
+      <div class="pt">${p.t}</div><h3>${p.title}</h3><p>${p.org}</p></div>`).join("")}</div>`;
+  app.appendChild(pre);
+
+  DAYS.forEach(day=>{
+    const cols=ORDER.filter(s=>!hidden.has(s));
+    const colIndex={};cols.forEach((s,i)=>colIndex[s]=i+2);
+    const rows=(day.end-day.start)/5;
+    const line=m=>2+(m-day.start)/5;
+    const count=day.sessions.filter(x=>!hidden.has(x.stage)||x.key).length;
+
+    const sec=document.createElement("section");sec.className="day";
+    sec.innerHTML=`<div class="day-head"><span class="day-date">${day.date}</span>
+      <span class="day-dow">${day.dow}</span><span class="day-meta">${t("sessionsCount",count)}</span></div>`;
+
+    const wrap=document.createElement("div");wrap.className="tt-wrap";
+    const tt=document.createElement("div");tt.className="tt";
+    tt.style.gridTemplateColumns=`var(--timew) repeat(${cols.length}, minmax(0,1fr))`;
+    tt.style.gridTemplateRows=`auto repeat(${rows}, var(--u))`;
+
+    let html=`<div class="tt-h time-h">PDT</div>`;
+    cols.forEach(s=>{html+=`<div class="tt-h" style="--c:${cv(s)}"><span class="bar"></span>${STAGES[s].label}</div>`;});
+    for(let m=day.start;m<=day.end;m+=60){
+      html+=`<div class="hourline" style="grid-row:${line(m)}"></div>`;
+      html+=`<div class="hourlabel" style="grid-row:${line(m)} / span 12">${fmt(m).replace(":00","")}</div>`;
+    }
+    html+=`<div class="timefill" style="grid-row:2 / ${rows+2}"></div>`;
+
+    day.sessions.forEach(ev=>{
+      if(hidden.has(ev.stage)&&!ev.key)return;
+      const col=ev.key?`2 / -1`:`${colIndex[ev.stage]}`;
+      if(!ev.key&&col==="undefined")return;
+      html+=`<div class="ev ${ev.key?'key':''} ${ev.venue?'venue':''}" data-id="${ev._id}"
+        style="grid-column:${col};grid-row:${line(ev.s)} / ${line(ev.e)};--c:${cv(ev.stage)}">
+        <span class="etime">${fmtRange(ev.s,ev.e)}</span>
+        <span class="eorg">${ev.org}</span><h3>${ev.title}</h3></div>`;
+    });
+
+    tt.innerHTML=html;wrap.appendChild(tt);sec.appendChild(wrap);app.appendChild(sec);
+  });
+
+  document.querySelectorAll("[data-id]").forEach(el=>{
+    el.addEventListener("click",()=>openSheet(+el.getAttribute("data-id")));
+  });
+}
+
+/* ---------- Bottom sheet ---------- */
+const scrim=document.getElementById("scrim"),sheet=document.getElementById("sheet"),
+      body=document.getElementById("sheetBody");
+function openSheet(id){
+  const x=ALL[id];if(!x)return;
+  const stage=x.stage||"venue";const color=cv(stage);
+  const time = x.t ? x.t : `${fmt(x.s)} – ${fmt(x.e)}`;
+  const stageLabel = (STAGES[stage]||STAGES.venue).label + (x._pre?"":t("stageSuffix"));
+  const tags=[];
+  if(x.theme)tags.push(`<span class="theme">${x.theme}</span>`);
+  (x.topics||[]).forEach(tp=>tags.push(`<span>${tp}</span>`));
+  const spk=(x.spk||[]).map(p=>`<div class="spk">
+      <div class="av" style="background:${color}">${initials(p.n)}</div>
+      <div><div class="nm">${p.n}</div><div class="rl">${p.r}</div></div></div>`).join("");
+  const meta=EXTRA[x.title];
+  const url=sessionUrl(x);
+  const descEn = x.descEn || (meta&&meta.de) || "";
+  const descJa = x.desc   || (meta&&meta.d)  || "";
+  const desc = lang==="en" ? (descEn || descJa) : (descJa || descEn);
+  body.innerHTML=`
+    <div class="s-stage" style="--c:${color}"><span class="dot"></span>${stageLabel}</div>
+    <p class="s-time">${time}</p>
+    <h2 id="sheetTitle">${x.title}</h2>
+    ${tags.length?`<div class="s-tags">${tags.join("")}</div>`:""}
+    ${desc?`<p class="s-summary-label">${t("summaryLabel")}</p><p class="s-desc">${desc}</p>`
+          :(url?`<p class="s-note">${t("noSummary")}</p>`:"")}
+    ${spk?`<p class="s-sec">${t("speakersLabel")}</p>${spk}`:""}
+    ${url?`<a class="s-link" href="${url}" target="_blank" rel="noopener">${t("officialLink")}</a>`:""}
+  `;
+  sheet.style.setProperty("--c",color);
+  scrim.classList.add("open");sheet.classList.add("open");
+  document.body.style.overflow="hidden";
+}
+function closeSheet(){scrim.classList.remove("open");sheet.classList.remove("open");
+  document.body.style.overflow="";}
+scrim.addEventListener("click",closeSheet);
+document.getElementById("sheetClose").addEventListener("click",closeSheet);
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeSheet();});
+
+function applyLang(){
+  document.documentElement.lang = lang;
+  document.title = t("docTitle");
+  document.querySelectorAll("[data-i18n]").forEach(el=>{
+    el.textContent = t(el.dataset.i18n);
+  });
+  document.querySelectorAll("[data-i18n-html]").forEach(el=>{
+    el.innerHTML = t(el.dataset.i18nHtml);
+  });
+  document.querySelectorAll("[data-i18n-aria]").forEach(el=>{
+    el.setAttribute("aria-label", t(el.dataset.i18nAria));
+  });
+  document.querySelectorAll("#langToggle .opt").forEach(el=>{
+    el.classList.toggle("on", el.dataset.opt === lang);
+  });
+  render();
+}
+
+document.getElementById("langToggle").addEventListener("click",()=>{
+  lang = (lang === "en") ? "ja" : "en";
+  try { localStorage.setItem("lang", lang); } catch(e){}
+  applyLang();
+});
+
+buildLegend();
+applyLang();
+</script>
+</body>
+</html>
