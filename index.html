@@ -30,7 +30,7 @@
     --card:#ffffff; --line:#dfe2e8; --grid:#e9ebef;
     --main:#6d28d9; --mezzanine:#d63b46; --level2:#0f8a6b;
     --maker:#d9730d; --community:#c026a6; --labs:#2563eb; --venue:#6b7280;
-    --u:23px; --timew:54px; --maxw:1320px;
+    --u:23px; --timew:54px; --maxw:1320px; --colw:minmax(0,1fr);
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--paper);color:var(--ink);
@@ -92,10 +92,11 @@
   .tt-h.time-h{z-index:7;color:var(--ink-soft);text-align:left;padding-left:8px}
 
   .hourline{grid-column:1 / -1;border-top:1px solid var(--grid);z-index:0;pointer-events:none}
-  .hourlabel{grid-column:1;z-index:3;background:var(--card);
+  .hourlabel{grid-column:1;z-index:3;background:var(--card);position:sticky;left:0;
     font-family:"Space Mono",monospace;font-size:11px;font-weight:700;color:var(--ink-soft);
     padding:2px 6px 0 8px;border-right:1px solid var(--line)}
-  .timefill{grid-column:1;z-index:2;background:var(--card);border-right:1px solid var(--line)}
+  .timefill{grid-column:1;z-index:2;background:var(--card);position:sticky;left:0;border-right:1px solid var(--line)}
+  .tt-h.time-h{position:sticky;left:0;z-index:8}
 
   .ev{z-index:1;margin:2px;border-radius:8px;background:var(--card);
     border:1px solid var(--line);border-left:3px solid var(--c);
@@ -186,13 +187,16 @@
   .btn:hover{background:var(--main)}
 
   @media (max-width:600px){
-    :root{--timew:40px;--u:24px}
-    .ev{padding:4px 5px;border-left-width:3px}
-    .ev h3{font-size:12px;-webkit-line-clamp:2}
-    .ev .etime,.ev .eorg{font-size:10px}
-    .ev.key h3{font-size:16px}
-    .tt-h{font-size:8.5px;padding:7px 1px}
-    .tt-h .bar{width:16px}
+    :root{--timew:44px;--u:24px;--colw:150px}
+    .tt-wrap{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;
+      scroll-snap-type:x proximity}
+    .tt-h:not(.time-h){scroll-snap-align:start}
+    .ev{padding:5px 6px;border-left-width:3px}
+    .ev h3{font-size:13px;-webkit-line-clamp:3}
+    .ev .etime,.ev .eorg{font-size:10.5px}
+    .ev.key h3{font-size:17px}
+    .tt-h{font-size:9.5px;padding:7px 3px}
+    .tt-h .bar{width:18px}
     .sheet h2{font-size:21px}
   }
   @media (prefers-reduced-motion:reduce){
@@ -621,7 +625,7 @@ function render(){
 
     const wrap=document.createElement("div");wrap.className="tt-wrap";
     const tt=document.createElement("div");tt.className="tt";
-    tt.style.gridTemplateColumns=`var(--timew) repeat(${cols.length}, minmax(0,1fr))`;
+    tt.style.gridTemplateColumns=`var(--timew) repeat(${cols.length}, var(--colw))`;
     tt.style.gridTemplateRows=`auto repeat(${rows}, var(--u))`;
 
     let html=`<div class="tt-h time-h">PDT</div>`;
