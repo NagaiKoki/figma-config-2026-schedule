@@ -4,6 +4,8 @@
 
 A single-file HTML timetable for **Figma Config 2026** sessions — vertical axis = time, horizontal axis = stage. Overlapping sessions sit side by side so you can scan a day at a glance.
 
+> ⚠️ **Unofficial fan-made companion.** Not affiliated with or endorsed by Figma. All session data is paraphrased from the [official agenda](https://config.figma.com/san-francisco/agenda) — refer to the official page for canonical information.
+
 ## Usage
 
 Open the live page above, or just open `index.html` in a browser.
