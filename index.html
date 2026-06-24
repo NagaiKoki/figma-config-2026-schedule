@@ -78,7 +78,10 @@
 
   .preshow{display:flex;flex-wrap:wrap;gap:10px}
   .pre-card{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--venue);
-    border-radius:12px;padding:13px 15px;flex:1 1 230px;min-width:200px;cursor:pointer}
+    border-radius:12px;padding:13px 15px;flex:1 1 230px;min-width:200px;cursor:pointer;
+    position:relative}
+  .pre-card.going{background:#fff7ed;border-color:#f59e0b;border-left-color:#f59e0b;
+    box-shadow:0 2px 10px rgba(245,158,11,.20)}
   .pre-card .pt{font-family:"Space Mono",monospace;font-size:11px;color:var(--ink-soft)}
   .pre-card h3{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:16px;margin:4px 0 2px}
   .pre-card p{margin:0;font-size:12.5px;color:var(--ink-soft)}
@@ -103,10 +106,15 @@
     padding:5px 7px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;gap:1px;
     position:relative;transition:transform .08s,box-shadow .12s}
   .ev:hover{box-shadow:0 3px 12px rgba(0,0,0,.13);transform:translateY(-1px);z-index:4}
-  .ev .going-mark{position:absolute;top:2px;right:5px;font-size:11px;line-height:1;
-    color:#f59e0b;pointer-events:none;text-shadow:0 0 2px rgba(255,255,255,.95)}
-  .ev.key .going-mark{color:#fbbf24;text-shadow:none;font-size:13px;top:6px;right:10px}
-  .ev.going{box-shadow:inset 0 0 0 1.5px #f59e0b}
+  .ev .going-mark{position:absolute;top:3px;right:5px;font-size:13px;line-height:1;
+    color:#f59e0b;pointer-events:none;
+    text-shadow:0 0 3px rgba(255,255,255,.95),0 0 1px rgba(255,255,255,.95)}
+  .ev.key .going-mark{color:#fde68a;text-shadow:0 1px 2px rgba(0,0,0,.25);font-size:15px;top:7px;right:10px}
+  .ev.going{background:#fff7ed;
+    box-shadow:inset 0 0 0 2.5px #f59e0b, 0 2px 10px rgba(245,158,11,.22)}
+  .ev.venue.going{background:#fff7ed}
+  .ev.key.going{background:var(--main);
+    box-shadow:inset 0 0 0 2.5px #fbbf24, 0 3px 14px rgba(251,191,36,.34)}
   .ev .etime{font-family:"Space Mono",monospace;font-size:11px;font-weight:700;
     letter-spacing:.02em;color:var(--ink);line-height:1.2;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -603,7 +611,7 @@ function render(){
     const pre=document.createElement("section");pre.className="day";
     pre.innerHTML=`<div class="day-head"><span class="day-date">June 23</span>
       <span class="day-dow">${t("preDow")}</span><span class="day-meta">${t("eventsCount",preList.length)}</span></div>
-      <div class="preshow">${preList.map(p=>`<div class="pre-card" data-id="${p._id}">
+      <div class="preshow">${preList.map(p=>`<div class="pre-card${going.has(getKey(p))?' going':''}" data-id="${p._id}">
         <div class="pt">${p.t}</div><h3>${p.title}${going.has(getKey(p))?' <span class="going-mark">★</span>':''}</h3><p>${p.org}</p></div>`).join("")}</div>`;
     app.appendChild(pre);
   }
