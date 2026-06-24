@@ -45,6 +45,7 @@
     font-family:"Inter",sans-serif;font-size:12.5px;font-weight:600;padding:5px 11px 5px 9px;
     border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
   .chip .dot{width:9px;height:9px;border-radius:50%;background:var(--c);flex:none}
+  .chip .count{opacity:.7;font-weight:500;margin-left:2px;font-variant-numeric:tabular-nums}
   .chip[aria-pressed="false"]{opacity:.32;text-decoration:line-through}
   .chip:hover{border-color:var(--ink)}
 
@@ -82,8 +83,12 @@
   .ev{z-index:1;margin:2px;border-radius:8px;background:var(--card);
     border:1px solid var(--line);border-left:3px solid var(--c);
     padding:5px 7px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;gap:1px;
-    transition:transform .08s,box-shadow .12s}
+    position:relative;transition:transform .08s,box-shadow .12s}
   .ev:hover{box-shadow:0 3px 12px rgba(0,0,0,.13);transform:translateY(-1px);z-index:4}
+  .ev .going-mark{position:absolute;top:2px;right:5px;font-size:11px;line-height:1;
+    color:#f59e0b;pointer-events:none;text-shadow:0 0 2px rgba(255,255,255,.95)}
+  .ev.key .going-mark{color:#fbbf24;text-shadow:none;font-size:13px;top:6px;right:10px}
+  .ev.going{box-shadow:inset 0 0 0 1.5px #f59e0b}
   .ev .etime{font-family:"Space Mono",monospace;font-size:9.5px;font-weight:700;
     letter-spacing:.02em;color:var(--ink);line-height:1.15;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -141,6 +146,15 @@
     font-family:"Inter",sans-serif;font-weight:600;font-size:14px;color:#fff;
     background:var(--c);border-radius:999px;padding:11px 19px;text-decoration:none}
   .s-link:hover{filter:brightness(.93)}
+  .s-going{display:inline-flex;align-items:center;gap:7px;
+    font-family:"Inter",sans-serif;font-weight:600;font-size:13.5px;
+    background:var(--card);border:1.5px solid var(--line);color:var(--ink);
+    border-radius:999px;padding:9px 17px;cursor:pointer;margin:2px 0 14px;
+    transition:background .15s,border-color .15s,color .15s}
+  .s-going:hover{border-color:var(--ink)}
+  .s-going .star{font-size:14px;line-height:1}
+  .s-going.on{background:#fff7ed;border-color:#f59e0b;color:#b45309}
+  .s-going.on .star{color:#f59e0b}
 
   .footnote{max-width:var(--maxw);margin:30px auto 0;padding:0 20px;font-size:11.5px;
     color:var(--ink-soft);font-family:"Space Mono",monospace}
@@ -232,6 +246,9 @@ const I18N = {
     noSummary: "No summary written yet for this session. Tap the link below for the official description.",
     officialLink: "View official page ↗",
     stageSuffix: " stage",
+    mineLabel: "My schedule",
+    addToMine: "Add to my schedule",
+    inMine: "In my schedule",
   },
   ja: {
     docTitle: "Config 2026 — アジェンダ・タイムテーブル",
@@ -250,6 +267,9 @@ const I18N = {
     noSummary: "このセッションの概要はまだ要約していません。下のリンクから公式の説明をご覧ください。",
     officialLink: "公式ページで詳細を見る ↗",
     stageSuffix: " stage",
+    mineLabel: "見にいく",
+    addToMine: "見にいくに追加",
+    inMine: "見にいく登録済み",
   },
 };
 const t = (k, ...args) => {
@@ -521,6 +541,12 @@ const sessionUrl=x=>{const m=EXTRA[x.title];return m?`https://config.figma.com/s
 
 const hidden=new Set();
 
+let mineOnly=false;
+let going=new Set();
+try{const raw=localStorage.getItem("going");if(raw)going=new Set(JSON.parse(raw));}catch(e){}
+const saveGoing=()=>{try{localStorage.setItem("going",JSON.stringify([...going]));}catch(e){}};
+const getKey=x=>`${x.title}@${x.s??x.t??""}@${x.stage||""}`;
+
 function buildLegend(){
   const nav=document.getElementById("legend");
   ORDER.forEach(key=>{
@@ -532,24 +558,42 @@ function buildLegend(){
       b.setAttribute("aria-pressed",hidden.has(key)?"false":"true");render();};
     nav.appendChild(b);
   });
+  const m=document.createElement("button");
+  m.className="chip mine";m.id="mineChip";
+  m.setAttribute("aria-pressed",mineOnly?"true":"false");
+  m.style.setProperty("--c","#f59e0b");
+  m.innerHTML=`<span class="dot"></span><span class="lbl">${t("mineLabel")}</span> <span class="count">(${going.size})</span>`;
+  m.onclick=()=>{mineOnly=!mineOnly;m.setAttribute("aria-pressed",mineOnly?"true":"false");render();};
+  nav.appendChild(m);
+}
+function updateMineChip(){
+  const m=document.getElementById("mineChip");if(!m)return;
+  m.setAttribute("aria-pressed",mineOnly?"true":"false");
+  m.querySelector(".lbl").textContent=t("mineLabel");
+  m.querySelector(".count").textContent=`(${going.size})`;
 }
 
 function render(){
   const app=document.getElementById("app");app.innerHTML="";
 
-  const pre=document.createElement("section");pre.className="day";
-  pre.innerHTML=`<div class="day-head"><span class="day-date">June 23</span>
-    <span class="day-dow">${t("preDow")}</span><span class="day-meta">${t("eventsCount",PRESHOW.length)}</span></div>
-    <div class="preshow">${PRESHOW.map(p=>`<div class="pre-card" data-id="${p._id}">
-      <div class="pt">${p.t}</div><h3>${p.title}</h3><p>${p.org}</p></div>`).join("")}</div>`;
-  app.appendChild(pre);
+  const preList = mineOnly ? PRESHOW.filter(p=>going.has(getKey(p))) : PRESHOW;
+  if (preList.length){
+    const pre=document.createElement("section");pre.className="day";
+    pre.innerHTML=`<div class="day-head"><span class="day-date">June 23</span>
+      <span class="day-dow">${t("preDow")}</span><span class="day-meta">${t("eventsCount",preList.length)}</span></div>
+      <div class="preshow">${preList.map(p=>`<div class="pre-card" data-id="${p._id}">
+        <div class="pt">${p.t}</div><h3>${p.title}${going.has(getKey(p))?' <span class="going-mark">★</span>':''}</h3><p>${p.org}</p></div>`).join("")}</div>`;
+    app.appendChild(pre);
+  }
 
   DAYS.forEach(day=>{
     const cols=ORDER.filter(s=>!hidden.has(s));
     const colIndex={};cols.forEach((s,i)=>colIndex[s]=i+2);
     const rows=(day.end-day.start)/5;
     const line=m=>2+(m-day.start)/5;
-    const count=day.sessions.filter(x=>!hidden.has(x.stage)||x.key).length;
+    const visible=ev=>(!mineOnly||going.has(getKey(ev)))&&(!hidden.has(ev.stage)||ev.key);
+    const count=day.sessions.filter(visible).length;
+    if(mineOnly&&count===0)return;
 
     const sec=document.createElement("section");sec.className="day";
     sec.innerHTML=`<div class="day-head"><span class="day-date">${day.date}</span>
@@ -569,13 +613,15 @@ function render(){
     html+=`<div class="timefill" style="grid-row:2 / ${rows+2}"></div>`;
 
     day.sessions.forEach(ev=>{
-      if(hidden.has(ev.stage)&&!ev.key)return;
+      if(!visible(ev))return;
       const col=ev.key?`2 / -1`:`${colIndex[ev.stage]}`;
       if(!ev.key&&col==="undefined")return;
-      html+=`<div class="ev ${ev.key?'key':''} ${ev.venue?'venue':''}" data-id="${ev._id}"
+      const isGoing=going.has(getKey(ev));
+      html+=`<div class="ev ${ev.key?'key':''} ${ev.venue?'venue':''} ${isGoing?'going':''}" data-id="${ev._id}"
         style="grid-column:${col};grid-row:${line(ev.s)} / ${line(ev.e)};--c:${cv(ev.stage)}">
         <span class="etime">${fmtRange(ev.s,ev.e)}</span>
-        <span class="eorg">${ev.org}</span><h3>${ev.title}</h3></div>`;
+        <span class="eorg">${ev.org}</span><h3>${ev.title}</h3>
+        ${isGoing?'<span class="going-mark">★</span>':''}</div>`;
     });
 
     tt.innerHTML=html;wrap.appendChild(tt);sec.appendChild(wrap);app.appendChild(sec);
@@ -605,19 +651,35 @@ function openSheet(id){
   const descEn = x.descEn || (meta&&meta.de) || "";
   const descJa = x.desc   || (meta&&meta.d)  || "";
   const desc = lang==="en" ? (descEn || descJa) : (descJa || descEn);
+  const key=getKey(x);
+  const on=going.has(key);
   body.innerHTML=`
     <div class="s-stage" style="--c:${color}"><span class="dot"></span>${stageLabel}</div>
     <p class="s-time">${time}</p>
     <h2 id="sheetTitle">${x.title}</h2>
     ${tags.length?`<div class="s-tags">${tags.join("")}</div>`:""}
+    <button class="s-going${on?' on':''}" id="goingBtn" data-key="${key}">
+      <span class="star">${on?'★':'☆'}</span><span class="lbl">${on?t("inMine"):t("addToMine")}</span>
+    </button>
     ${desc?`<p class="s-summary-label">${t("summaryLabel")}</p><p class="s-desc">${desc}</p>`
           :(url?`<p class="s-note">${t("noSummary")}</p>`:"")}
     ${spk?`<p class="s-sec">${t("speakersLabel")}</p>${spk}`:""}
     ${url?`<a class="s-link" href="${url}" target="_blank" rel="noopener">${t("officialLink")}</a>`:""}
   `;
+  document.getElementById("goingBtn").addEventListener("click",e=>toggleGoing(key,e.currentTarget));
   sheet.style.setProperty("--c",color);
   scrim.classList.add("open");sheet.classList.add("open");
   document.body.style.overflow="hidden";
+}
+function toggleGoing(key,btn){
+  if(going.has(key))going.delete(key);else going.add(key);
+  saveGoing();
+  const on=going.has(key);
+  btn.classList.toggle("on",on);
+  btn.querySelector(".star").textContent=on?"★":"☆";
+  btn.querySelector(".lbl").textContent=on?t("inMine"):t("addToMine");
+  updateMineChip();
+  render();
 }
 function closeSheet(){scrim.classList.remove("open");sheet.classList.remove("open");
   document.body.style.overflow="";}
@@ -640,6 +702,7 @@ function applyLang(){
   document.querySelectorAll("#langToggle .opt").forEach(el=>{
     el.classList.toggle("on", el.dataset.opt === lang);
   });
+  updateMineChip();
   render();
 }
 
